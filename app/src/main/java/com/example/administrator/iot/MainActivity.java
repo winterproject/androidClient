@@ -1,27 +1,28 @@
 package com.example.administrator.iot;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
+import android.os.AsyncTask;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-//import java.io.InputStreamReader;
-//import java.io.OutputStream;
-//import java.io.OutputStreamWriter;
-//import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
+import java.net.UnknownHostException;
 
 public class MainActivity extends ActionBarActivity {
 
-    private Socket socket;
-    private BufferedReader networkReader;
-    private BufferedWriter networkWriter;
+
+
+    OutputStream os;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,49 +30,32 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
     }
 
-    /*public void setSocket(String ip, int port) throws IOException {
-        try {
-            socket = new Socket(ip, port);
-            networkWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            networkReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        } catch (IOException e) {
-            System.out.println(e);
-            e.printStackTrace();
-        }
-    }*/
 
-    public void onCPOnClicked(View v){
-        try {
-            Socket socket = new Socket("52.11.52.152", 9000);
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-        //try {
-         //   OutputStream os = socket.getOutputStream();
-            //OutputStreamWriter osw = new OutputStreamWriter(os);
-           // BufferedWriter bw = new BufferedWriter(osw);
+    public void onCPOnClicked(View v) throws Exception {
 
-            //String str = "p1";
+        Toast.makeText(getApplicationContext(), "시작", Toast.LENGTH_SHORT).show();
 
-           // while(true)
-           //     bw.write(str, 0, 2);
-
-       // } catch (IOException e) {
-       //     e.printStackTrace();
-      //  }
+       NetworkTask nt = new NetworkTask("52.11.52.152",9000,0);
+        nt.execute();
 
         Toast.makeText(getApplicationContext(), "컴퓨터가 켜졌습니다!", Toast.LENGTH_SHORT).show();
     }
     public void onCPOffClicked(View v){
 
+        NetworkTask nt = new NetworkTask("52.11.52.152",9000,1);
+        nt.execute();
         Toast.makeText(getApplicationContext(), "컴퓨터가 꺼졌습니다!", Toast.LENGTH_SHORT).show();
     }
     public void onLPOnClicked(View v){
 
+        NetworkTask nt = new NetworkTask("52.11.52.152",9000,2);
+        nt.execute();
         Toast.makeText(getApplicationContext(), "전등이 켜졌습니다!", Toast.LENGTH_SHORT).show();
     }
     public void onLPOffClicked(View v){
 
+        NetworkTask nt = new NetworkTask("52.11.52.152",9000,3);
+        nt.execute();
         Toast.makeText(getApplicationContext(), "전등이 꺼졌습니다!", Toast.LENGTH_SHORT).show();
     }
     @Override
@@ -95,4 +79,75 @@ public class MainActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    public class NetworkTask extends AsyncTask<Void, Void, Void> {
+
+        String dstAddress;
+        int dstPort;
+
+        int dstcmd;
+
+        NetworkTask(String addr, int port, int cmd) {
+            dstAddress = addr;
+            dstPort = port;
+           dstcmd = cmd;
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+
+            try {
+                Socket socket = new Socket(dstAddress, dstPort);
+                OutputStream os = socket.getOutputStream();
+                byte[] buffer = new byte[1024];
+
+                if( dstcmd == 0)
+                {
+                    buffer = "p1".getBytes();
+                    os.write(buffer);
+                    buffer = "exit".getBytes();
+                    os.write(buffer);
+
+                }
+                else if ( dstcmd == 1)
+                {
+                    buffer = "p0".getBytes();
+                    os.write(buffer);
+                    buffer = "exit".getBytes();
+                    os.write(buffer);
+                }
+                else if ( dstcmd == 2)
+                {
+                    buffer = "l1".getBytes();
+                    os.write(buffer);
+                    buffer = "exit".getBytes();
+                    os.write(buffer);
+                }
+                else
+                {
+                    buffer = "l0".getBytes();
+                    os.write(buffer);
+                    buffer = "exit\0".getBytes();
+                    os.write(buffer);
+                }
+
+                socket.close();
+
+
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+
+            super.onPostExecute(result);
+        }
+
+    }
 }
+
