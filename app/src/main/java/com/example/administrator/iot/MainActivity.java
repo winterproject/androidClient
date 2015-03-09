@@ -131,7 +131,7 @@ public class MainActivity extends ActionBarActivity {
                     os.write(buffer);
                 }
 
-                socket.close();
+                //socket.close();
 
 
             } catch (UnknownHostException e) {
